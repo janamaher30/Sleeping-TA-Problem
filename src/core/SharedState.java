@@ -1,4 +1,5 @@
 package core;
+
 import java.util.Map;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
@@ -27,11 +28,11 @@ public class SharedState {
     }
 
     public void updateStudentStatus(int studentId, StudentStatus status) {
-        // TODO: Update student status
+        studentStatuses.put(studentId, status);
     }
 
     public void updateTAStatus(int taId, TAStatus status) {
-        // TODO: Update TA status
+        taStatuses.put(taId, status);
     }
 
     public Map<Integer, StudentStatus> getStudentStatuses() {
@@ -43,7 +44,37 @@ public class SharedState {
     }
 
     public Map<String, Integer> getStatistics() {
-        // TODO: Calculate simulation statistics
-        return new HashMap<>();
+
+        int workingTAs = 0;
+        int sleepingTAs = 0;
+        int waitingStudents = 0;
+        int studentsReturningLater = 0;
+
+        for (TAStatus status : taStatuses.values()) {
+
+            if (status == TAStatus.WORKING) {
+                workingTAs++;
+            } else if (status == TAStatus.SLEEPING) {
+                sleepingTAs++;
+            }
+        }
+
+        for (StudentStatus status : studentStatuses.values()) {
+
+            if (status == StudentStatus.WAITING) {
+                waitingStudents++;
+            } else if (status == StudentStatus.RETURNING_LATER) {
+                studentsReturningLater++;
+            }
+        }
+
+        Map<String, Integer> statistics = new HashMap<>();
+
+        statistics.put("workingTAs", workingTAs);
+        statistics.put("sleepingTAs", sleepingTAs);
+        statistics.put("waitingStudents", waitingStudents);
+        statistics.put("studentsReturningLater", studentsReturningLater);
+
+        return statistics;
     }
 }
