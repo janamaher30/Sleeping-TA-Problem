@@ -1,9 +1,7 @@
 package gui;
-
 import javax.swing.*;
-
+import java.awt.*;
 public class ActivityLogPanel extends JPanel {
-
     private JTextArea activityLog;
 
     public ActivityLogPanel() {
@@ -11,14 +9,28 @@ public class ActivityLogPanel extends JPanel {
     }
 
     private void initializePanel() {
-        // TODO: Create activity log components
+        setLayout(new BorderLayout());
+        activityLog = new JTextArea();
+        activityLog.setEditable(false);
+        activityLog.setLineWrap(true);
+        activityLog.setWrapStyleWord(true);
+        JScrollPane scrollPane = new JScrollPane(activityLog);
+        setBorder(BorderFactory.createTitledBorder(
+            "Simulation Activity Log"
+        ));
+        add(scrollPane, BorderLayout.CENTER);
     }
 
     public void addLogMessage(String message) {
-        // TODO: Add new activity message
-    }
-
-    public void clearLog() {
-        // TODO: Clear activity log
+        if (message == null || message.trim().isEmpty()) {
+            return;
+        }
+        SwingUtilities.invokeLater(() -> {
+            activityLog.append(message + "\n");
+            activityLog.setCaretPosition(
+                activityLog.getDocument().getLength()
+            );
+        });
     }
 }
+

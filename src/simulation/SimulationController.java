@@ -17,11 +17,28 @@ public class SimulationController {
     private SharedState sharedState;
     private List<Student> students;
     private List<TA> tas;
+    private boolean initialized = false;
+    private boolean running = false;
 
     public SimulationController(
             int studentCount,
             int taCount,
             int waitingChairs) {
+        if(studentCount<=0){
+            throw new IllegalArgumentException(
+                "Student count must be greater than zero."
+            );
+        }
+        if(taCount<=0){
+            throw new IllegalArgumentException(
+                "TA count must be greater than zero."
+            );
+        }
+        if(waitingChairs<0){
+            throw new IllegalArgumentException(
+                "Waiting chairs cannot be negative."
+            );
+        }
         this.studentCount = studentCount;
         this.taCount = taCount;
         this.waitingChairs = waitingChairs;
@@ -30,11 +47,51 @@ public class SimulationController {
     }
 
     public void initializeSimulation() {
-        // TODO: Initialize shared objects and threads
+        if(running){
+            throw new IllegalStateException(
+                "Cannot initialize while simulation is running."
+            );
+        }
+        sharedState = new SharedState();
+        synchronizationManager= new SynchronizationManager(taCount,waitingChairs);
+        waitingRoom=new WaitingRoom(waitingChairs);
+        students.clear();
+        for(int i=1;i<=studentCount;i++){
+            Student student=new Student(
+                    i,waitingRoom,synchronizationManager,sharedState
+            );
+            students.add(student);
+            sharedState.updateStudentStatus(i, SharedState.StudentStatus.ARRIVED);
+        }
+        tas.clear();
+        for(int i=1;i<=taCount;i++){
+            TA ta=new TA(
+                    i,waitingRoom,synchronizationManager,sharedState
+            );
+            tas.add(ta);
+            sharedState.updateTAStatus(i, SharedState.TAStatus.SLEEPING);
+        }
+        initialized=true;
     }
 
     public void startSimulation() {
-        // TODO: Start TA and student threads
+        if(!initialized){
+            throw new IllegalStateException(
+                "Simulation must be initialized before starting."
+            );
+        }
+        if(running){
+            throw new IllegalStateException(
+                 "Simulation is already running."
+            );
+        }
+        running=true;
+        for(TA ta : tas){
+            ta.start();
+        }
+        for(Student student:students){
+            student.start();
+        }
     }
 
     public void stopSimulation() {
@@ -42,7 +99,12 @@ public class SimulationController {
     }
 
     public void resetSimulation() {
-        // TODO: Reset simulation data
+        if(running){
+            throw new IllegalStateException(
+                "Cannot reset while simulation is running."
+            );
+        }
+       initializeSimulation();
     }
 
     public SharedState getSharedState() {
@@ -51,5 +113,12 @@ public class SimulationController {
 
     public WaitingRoom getWaitingRoom() {
         return waitingRoom;
+    }
+    public boolean isInitialized() {
+        return initialized;
+    }
+
+    public boolean isRunning() {
+        return running;
     }
 }
