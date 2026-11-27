@@ -2,40 +2,81 @@ package core;
 import java.util.concurrent.Semaphore;
 
 public class SynchronizationManager {
-    private final Semaphore availableTAs;
-    private final Semaphore waitingChairs;
-    private final Semaphore mutex;
+    private final int taCount;
+    private final int chairCount;
+
+    private volatile Semaphore availableTAs;
+    private volatile Semaphore waitingChairs;
+    private volatile Semaphore mutex;
+    private volatile Semaphore studentsWaiting;
+    private volatile Semaphore turn;
+    private volatile Semaphore helpDone;
 
     public SynchronizationManager(int taCount, int chairCount) {
-        availableTAs = new Semaphore(taCount);
-        waitingChairs = new Semaphore(chairCount);
-        mutex = new Semaphore(1);
+        this.taCount = taCount;
+        this.chairCount = chairCount;
+        createSemaphores();
+    }
+
+    private void createSemaphores() {
+        availableTAs = new Semaphore(taCount, true);
+        waitingChairs = new Semaphore(chairCount, true);
+        mutex = new Semaphore(1, true);
+        studentsWaiting = new Semaphore(0, true);
+        turn = new Semaphore(0, true);
+        helpDone = new Semaphore(0, true);
     }
 
     public boolean tryAcquireTA() {
-        // TODO: Try to acquire an available TA
-        return false;
+        return availableTAs.tryAcquire();
+    }
+
+    public void acquireTA() throws InterruptedException {
+        availableTAs.acquire();
     }
 
     public void releaseTA() {
-        // TODO: Release TA permit
+        availableTAs.release();
     }
 
     public boolean tryAcquireChair() {
-        // TODO: Try to acquire an available chair
-        return false;
+        return waitingChairs.tryAcquire();
     }
 
     public void releaseChair() {
-        // TODO: Release chair permit
+        waitingChairs.release();
     }
 
     public void acquireMutex() {
-        // TODO: Acquire mutex
+        mutex.acquireUninterruptibly();
     }
 
     public void releaseMutex() {
-        // TODO: Release mutex
+        mutex.release();
+    }
+
+    public void signalStudentWaiting() {
+        studentsWaiting.release();
+    }
+
+    public void waitForStudent() throws InterruptedException {
+        studentsWaiting.acquire();
+    }
+
+    public void callStudent() {
+        turn.release();
+    }
+
+    public void waitForTurn() throws InterruptedException {
+        turn.acquire();
+    }
+
+    public void finishHelping() {
+        helpDone.release();
+    }
+
+    public void waitUntilHelped() throws InterruptedException {
+        helpDone.acquire();
     }
 
     public int getAvailableTAs() {
@@ -44,5 +85,9 @@ public class SynchronizationManager {
 
     public int getAvailableChairs() {
         return waitingChairs.availablePermits();
+    }
+
+    public void reset() {
+        createSemaphores();
     }
 }
